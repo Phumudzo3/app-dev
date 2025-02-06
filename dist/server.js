@@ -1,4 +1,5 @@
 "use strict";
+
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,9 +16,9 @@ exports.Server = void 0;
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 const environment_1 = require("./enviroments/environment");
 const UserRouter_1 = require("./router/UserRouter");
-const bodyParser = require("body-parser");
 const BannerRouter_1 = require("./router/BannerRouter");
 const CityRouter_1 = require("./router/CityRouter");
 const CategoryRouter_1 = require("./router/CategoryRouter");
@@ -32,23 +33,20 @@ const CartRouter_1 = require("./router/CartRouter");
 
 class Server {
     constructor() {
-        console.log("Server is initializing...");
+        console.log("Initializing server...");
         this.app = express();
         this.setConfigs();
         this.setRoutes();
         this.error404Handler();
         this.handleErrors();
-
-        // Start the server after all configurations
-        this.app.listen(3000, () => {
-            console.log("Server is running on port 3000...");
-        });
+        this.startServer();
     }
 
     setConfigs() {
         console.log("Configuring server...");
         this.dotenvConfigs();
         this.connectMongoDB();
+        this.connectRedis();
         this.allowCors();
         this.configureBodyParser();
     }
@@ -62,15 +60,15 @@ class Server {
     }
 
     connectMongoDB() {
-        mongoose.connect((0, environment_1.getEnvironmentVariables)().db_url).then(() => {
-            console.log("connected to mongodb.");
-        });
+        mongoose.connect((0, environment_1.getEnvironmentVariables)().db_url)
+            .then(() => console.log("Connected to MongoDB."))
+            .catch(error => console.error("MongoDB connection error:", error.message));
     }
 
     connectRedis() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                Redis_1.Redis.conncectToRedis();
+                yield Redis_1.Redis.conncectToRedis();
                 console.log("Connected to Redis.");
             } catch (error) {
                 console.error("Error connecting to Redis:", error.message);
@@ -95,7 +93,7 @@ class Server {
     error404Handler() {
         this.app.use((req, res) => {
             res.status(404).json({
-                message: "not found",
+                message: "Resource not found",
                 status_code: 404,
             });
         });
@@ -103,18 +101,24 @@ class Server {
 
     handleErrors() {
         this.app.use((error, req, res, next) => {
-            const errorStatus = req.errorStatus || 500;
+            const errorStatus = error.status || 500;
             res.status(errorStatus).json({
-                message: error.message || "something went wrong,please try again",
+                message: error.message || "Something went wrong, please try again",
                 status_code: errorStatus,
             });
         });
     }
 
     configureBodyParser() {
-        this.app.use(bodyParser.urlencoded({
-            extended: true,
-        }));
+        this.app.use(bodyParser.urlencoded({ extended: true }));
+        this.app.use(bodyParser.json());
+    }
+
+    startServer() {
+        const PORT = process.env.PORT || 3000;
+        this.app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}...`);
+        });
     }
 }
 

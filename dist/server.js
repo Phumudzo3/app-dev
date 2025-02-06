@@ -121,6 +121,9 @@ class Server {
         });
     }
 }
+app.get("/", (req, res) => {
+    res.send("Welcome to the API!");
+});
 
 // Instantiate the Server to start it
 new Server();

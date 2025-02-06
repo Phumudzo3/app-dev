@@ -37,6 +37,7 @@ class Server {
         this.app = express();
         this.setConfigs();
         this.setRoutes();
+        this.setWelcomeRoute();
         this.error404Handler();
         this.handleErrors();
         this.startServer();
@@ -68,7 +69,7 @@ class Server {
     connectRedis() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Redis_1.Redis.conncectToRedis();
+                yield Redis_1.Redis.connectToRedis();
                 console.log("Connected to Redis.");
             } catch (error) {
                 console.error("Error connecting to Redis:", error.message);
@@ -88,6 +89,12 @@ class Server {
         this.app.use("/api/product", ProductRouter_1.default);
         this.app.use("/api/address", AddressRouter_1.default);
         this.app.use("/api/order", OrderRouter_1.default);
+    }
+
+    setWelcomeRoute() {
+        this.app.get("/", (req, res) => {
+            res.send("Welcome to the API!");
+        });
     }
 
     error404Handler() {
